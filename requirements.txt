@@ -1,0 +1,6 @@
+numpy
+scipy
+matplotlib
+trimesh[easy]
+pyglet==1.5.29
+cvxopt
