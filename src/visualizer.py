@@ -157,14 +157,10 @@ def plot_grasp_wrench_space(
 
     # plot external wrench
     if external_wrench is not None:
-        # ax.quiver(
-        #     0, 0, 0,
-        #     external_wrench[0], external_wrench[1], external_wrench[2],
-        #     color='red')
         ax.plot(
-            [0, external_wrench[0]],
-            [0, external_wrench[1]],
-            [0, external_wrench[2]],
+            [0, -external_wrench[0]],
+            [0, -external_wrench[1]],
+            [0, -external_wrench[2]],
             color='red')
 
     # plot largest minimum resisted wrench

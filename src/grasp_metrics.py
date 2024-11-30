@@ -102,7 +102,7 @@ class GraspMetrics():
         # if the grasp is not the force closure,
         # largest minimum resisted wrench is 0
         if not GraspMetrics.force_closure_hull(convex_hull):
-            return 0.0
+            return 0.0, None
 
         ##############################################################
         # <About ConvexHull.equations>
@@ -145,7 +145,7 @@ class GraspMetrics():
         ##############################################################
 
         # check the external wrench is inside the convex hull
-        external_wrench = np.concatenate((external_wrench, [1]))
+        external_wrench = np.concatenate((-external_wrench, [1]))
         ret = np.all(convex_hull.equations @ external_wrench < -eps)
         return ret
 
@@ -182,8 +182,8 @@ class GraspMetrics():
         h1 = np.zeros(wrenches.shape[0])
         if wrench_hull is True:
             # if Grasp Wrench Hull, sum of weights <= 1
-            G2 = np.ones(wrenches.shape[0]) 
-            h2 = 1
+            G2 = np.ones((1, wrenches.shape[0]))
+            h2 = np.ones(1)
         else:
             # if Grasp Wrench Space, sum of weights for each contact point <= 1
             num_contact_points = len(contact_points)
@@ -191,6 +191,7 @@ class GraspMetrics():
             for i in range(num_contact_points):
                 G2[i, 2*i:2*(i+1)] = 1
             h2 = np.ones(num_contact_points)
+
         G = np.concatenate((G1, G2))
         h = np.concatenate((h1, h2))
 
@@ -204,7 +205,7 @@ class GraspMetrics():
         sol = solvers.qp(Q, p, G, h)
 
         # check the result
-        weights = np.array(sol['x'])
+        weights = np.array(sol['x']).flatten()
         error = np.linalg.norm(wrenches.T @ weights + external_wrench)
         can_resist = error < eps
         return can_resist

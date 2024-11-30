@@ -28,6 +28,7 @@ class ConvexObject():
 
         # set properties
         # For 2-D convex hulls, the vertices are in counterclockwise order. 
+        self._hull = convex_hull
         self._vertices = convex_hull.points[convex_hull.vertices]
         self._area =  convex_hull.volume
 
@@ -153,9 +154,59 @@ class ConvexObject():
         sample_normals = np.zeros((num_samples, 2))
         for i in range(num_samples):
             t = (partition[indices[i]] - rand_samples[i]) / edge_length[indices[i]]
-            sample_points[i] = vertices[indices[i]] * (1 - t) + vertices[indices[i] + 1] * t
+            sample_points[i] = vertices[indices[i]] * t + vertices[indices[i] + 1] * (1-t)
             sample_normals[i] = edge_normals[indices[i]]
         return sample_points, sample_normals
+
+    def sample_closest_point(self, point: np.ndarray):
+        """Find the closest point on the convex polygon and the normal vector.
+
+        Args:
+            point: A 1D numpy array of shape (2,) representing the query point.
+
+        Returns:
+            closest_point: A 1D numpy array of shape (2,) representing the closest point on the polygon.
+            normal: A 1D numpy array of shape (2,) representing the normal vector at the closest point.
+        """
+        point = np.array(point)
+        if point.shape != (2,):
+            raise ValueError("Point must be a 2D point")
+
+        # Find the closest point among all edges
+        closest_point = None
+        min_distance = float('inf')
+        normal = None
+
+        for simplex in self._hull.simplices:
+            edge = self._vertices[simplex]
+
+            # Vector representation of the edge
+            v0, v1 = edge[0], edge[1]
+            edge_vec = v1 - v0
+            edge_length = np.linalg.norm(edge_vec)
+
+            # Projection of the point onto the edge
+            t = np.clip(np.dot(point - v0, edge_vec) / edge_length**2, 0, 1)
+            projection = v0 + t * edge_vec
+
+            # Distance to the projection
+            dist = np.linalg.norm(point - projection)
+
+            if dist < min_distance:
+                min_distance = dist
+                closest_point = projection
+
+                # Compute the normal vector
+                edge_normal = np.array([-edge_vec[1], edge_vec[0]])  # Perpendicular to the edge
+                edge_normal /= np.linalg.norm(edge_normal)  # Normalize
+
+                # Ensure normal points away from the polygon
+                # if np.dot(edge_normal, point - projection) < 0:
+                #     edge_normal = -edge_normal
+
+                normal = edge_normal
+
+        return closest_point, normal
 
     @staticmethod
     def create_regular_polygon(num_vertices: int, radius: float) -> 'ConvexObject':
