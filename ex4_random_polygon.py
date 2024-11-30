@@ -11,15 +11,16 @@ from src.visualizer import plot_scene, plot_grasp_wrench_space
 def main():
     # set parameters
     friction_coef = 0.5
-    contact_force = 10  # N
-    external_wrench = np.array([0, 0, -20])  # (Nm, N, N)
+    contact_force = 1  # N
+    external_wrench = np.array([0, 0, -1])  # (Nm, N, N)
 
-    # create a convex object
-    # cvx_obj = ConvexObject.create_regular_polygon(12, 1)
-    cvx_obj = ConvexObject.create_regular_polygon(4, 0.1)
+    # create a random convex object
+    num_vertices = np.random.randint(3, 10)
+    cvx_obj = ConvexObject.create_regular_polygon(num_vertices, 1)
 
     # sample random uniform points on the surface
-    points, normals = cvx_obj.smaple_surface(3)
+    num_contacts = np.random.randint(2, 5)
+    points, normals = cvx_obj.smaple_surface(num_contacts)
 
     # create contact points
     contact_points = []
@@ -32,15 +33,21 @@ def main():
     gwh = GraspWrenchSpace(contact_points, wrench_hull=True)
 
     # compute all metrics
-    gws_fc = GraspMetrics.force_closure_hull(gws.convex_hull)
+    gws_fc = GraspMetrics.force_closure_lp(contact_points)
     gws_volume = GraspMetrics.volume(gws.convex_hull)
     gws_lrw, _ = GraspMetrics.largest_minimum_resisted_wrench(gws.convex_hull)
-    gws_wr = GraspMetrics.wrench_resistance_hull(gws.convex_hull, external_wrench)
+    gws_wr = GraspMetrics.wrench_resistance_qp(
+        contact_points=contact_points,
+        external_wrench=external_wrench,
+        wrench_hull=False)
 
-    gwh_fc = GraspMetrics.force_closure_hull(gwh.convex_hull)
+    gwh_fc = GraspMetrics.force_closure_lp(contact_points)
     gwh_volume = GraspMetrics.volume(gwh.convex_hull)
     gwh_lrw, _ = GraspMetrics.largest_minimum_resisted_wrench(gwh.convex_hull)
-    gwh_wr = GraspMetrics.wrench_resistance_hull(gwh.convex_hull, external_wrench)
+    gwh_wr = GraspMetrics.wrench_resistance_qp(
+        contact_points=contact_points,
+        external_wrench=external_wrench,
+        wrench_hull=True)
 
     # plot grasp examples
     fig = plt.figure(figsize=plt.figaspect(0.3))
@@ -68,7 +75,7 @@ def main():
     title += f"Volume: {gws_volume:.3g}\n"
     title += f"Largest Min. Resisted Wrench: {gws_lrw:.3g}\n"
     title += f"Wrench Resistance: {gws_wr}"
-    ax2.set_title(title)
+    ax2.set_title(title, loc='left')
 
     # 3) plot grasp wrench hull
     ax3 = fig.add_subplot(133, projection='3d')
@@ -83,7 +90,7 @@ def main():
     title += f"Volume: {gwh_volume:.3g}\n"
     title += f"Largest Min. Resisted Wrench: {gwh_lrw:.3g}\n"
     title += f"Wrench Resistance: {gwh_wr}"
-    ax3.set_title(title)
+    ax3.set_title(title, loc='left')
     plt.tight_layout()
     plt.show()
 
