@@ -49,7 +49,7 @@ def main():
     grasp1_volume = GraspMetrics.volume(grasp1_gws.convex_hull)
     grasp1_lrw, _ = GraspMetrics.largest_minimum_resisted_wrench(grasp1_gws.convex_hull)
 
-    grasp2_fc = GraspMetrics.force_closure_lp(grasp1_contact_points)
+    grasp2_fc = GraspMetrics.force_closure_lp(grasp2_contact_points)
     grasp2_volume = GraspMetrics.volume(grasp2_gws.convex_hull)
     grasp2_lrw, _ = GraspMetrics.largest_minimum_resisted_wrench(grasp2_gws.convex_hull)
 
